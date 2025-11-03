@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Berita Indonesia</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: linear-gradient(180deg, #e6f2ff, #f7faff);
+      font-family: 'Inter', sans-serif;
+      color: #333;
+    }
+
+    .navbar {
+      background: linear-gradient(90deg, #0056d6, #007bff);
+      box-shadow: 0 2px 10px rgba(0, 80, 200, 0.25);
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 25px rgba(0, 80, 200, 0.25);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #007bff, #0056d6);
+      color: white;
+      font-weight: 600;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: scale(1.03);
+    }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fade 0.6s ease-in-out; }
+
+    footer {
+      background: linear-gradient(90deg, #007bff, #0056d6);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar text-white py-4 shadow-lg sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto flex justify-between items-center px-6">
+      <h1 class="text-2xl font-bold tracking-wide">📰 Portal Berita Indonesia</h1>
+      <ul class="hidden md:flex gap-6 text-sm font-medium">
+        <li><a href="#" class="hover:underline">Home</a></li>
+        <li><a href="#" class="hover:underline">Nasional</a></li>
+        <li><a href="#" class="hover:underline">Teknologi</a></li>
+        <li><a href="#" class="hover:underline">Hiburan</a></li>
+        <li><a href="#" class="hover:underline">Olahraga</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <section class="text-center py-14 bg-gradient-to-r from-blue-100 to-blue-200">
+    <h2 class="text-4xl font-extrabold text-blue-700">Berita Terkini Indonesia</h2>
+    <p class="mt-3 text-gray-700">Dapatkan informasi aktual, terpercaya, dan terbaru setiap hari.</p>
+  </section>
+
+  <!-- SEARCH SECTION -->
+  <section class="max-w-5xl mx-auto mt-8 p-6 bg-white/80 backdrop-blur-md shadow-md rounded-2xl border border-blue-200">
+    <div class="grid md:grid-cols-2 gap-4">
+      <input id="searchInput" type="text" placeholder="Cari berita..." 
+             class="w-full p-3 rounded-lg border border-blue-300 focus:ring-2 focus:ring-blue-500 outline-none" />
+      <select id="categorySelect" class="w-full p-3 rounded-lg border border-blue-300 focus:ring-2 focus:ring-blue-500 outline-none">
+        <option value="">Semua Kategori</option>
+        <option value="nation">Nasional</option>
+        <option value="world">Dunia</option>
+        <option value="business">Bisnis</option>
+        <option value="technology">Teknologi</option>
+        <option value="entertainment">Hiburan</option>
+        <option value="sports">Olahraga</option>
+        <option value="science">Sains</option>
+        <option value="health">Kesehatan</option>
+      </select>
+    </div>
+    <button onclick="loadNews()" class="btn-primary w-full mt-4 py-3">Tampilkan Berita</button>
+    <p id="status" class="text-center mt-3 text-sm text-blue-700 font-medium"></p>
+  </section>
+
+  <!-- NEWS GRID -->
+  <main id="newsList" class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 p-8"></main>
+
+  <!-- PAGINATION -->
+  <div class="flex justify-between max-w-4xl mx-auto px-8 mt-6">
+    <button onclick="prevPage()" class="btn-primary px-6 py-2">⬅ Sebelumnya</button>
+    <button onclick="nextPage()" class="btn-primary px-6 py-2">Berikutnya ➡</button>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="text-center mt-12 py-8 text-sm text-white font-medium">
+    © <span id="year"></span> Portal Berita Indonesia · Powered by GNews API
+  </footer>
+
+<script>
+const API_KEY = "b3d28a0ac85049d23f513efde9520f3b";
+let page = 1;
+
+async function loadNews() {
+  const query = document.getElementById("searchInput").value || "Indonesia";
+  const category = document.getElementById("categorySelect").value;
+  document.getElementById("status").innerText = "🔄 Memuat berita...";
+
+  const proxy = "https://api.allorigins.win/raw?url=";
+  let apiURL = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=id&country=id&max=9&page=${page}&apikey=${API_KEY}`;
+  if (category) apiURL += `&topic=${category}`;
+  const url = `${proxy}${encodeURIComponent(apiURL)}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const list = document.getElementById("newsList");
+    list.innerHTML = "";
+
+    if (!data.articles || data.articles.length === 0) {
+      document.getElementById("status").innerHTML = "<span class='text-red-600'>❌ Tidak ada berita ditemukan.</span>";
+      return;
+    }
+
+    document.getElementById("status").innerText = "";
+
+    data.articles.forEach((a) => {
+      const card = `
+        <div class="card fade-in">
+          <img src="${a.image || 'https://via.placeholder.com/400x250/99ccff/333333?text=No+Image'}" 
+               class="w-full h-52 object-cover" />
+          <div class="p-5">
+            <h2 class="text-lg font-semibold text-blue-700 mb-2 line-clamp-2">${a.title}</h2>
+            <p class="text-sm text-gray-700 mb-3 line-clamp-3">${a.description || "Tidak ada deskripsi."}</p>
+            <a href="${a.url}" target="_blank" class="text-blue-700 font-medium hover:underline">Baca Selengkapnya →</a>
+          </div>
+        </div>`;
+      list.innerHTML += card;
+    });
+  } catch (err) {
+    console.error(err);
+    document.getElementById("status").innerHTML = "<span class='text-red-600'>⚠ Terjadi kesalahan. Coba lagi.</span>";
+  }
+}
+
+function nextPage() { page++; loadNews(); }
+function prevPage() { if (page > 1) { page--; loadNews(); } }
+
+document.getElementById("year").textContent = new Date().getFullYear();
+loadNews();
+</script>
+
+</body>
+</html>
